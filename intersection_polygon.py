@@ -1,7 +1,3 @@
-# -*- coding: utf8 -*-
-from shapely.geometry import Polygon
-
-
 class Point(object):
     """
     点 默认为（-1，-1）
@@ -58,6 +54,7 @@ class SdPolygon(object):
     def gene_polygon(self):
         for point in self.points:
             self.add_point_to_current(point)  # 依次将点加入数组
+        self.add_point_to_current(self.points[0])  # 最后将第一个数加入
         p0 = Polygon(self.current_points)
         self.sd_polygons.append(p0)
 
@@ -67,7 +64,7 @@ class SdPolygon(object):
         :param point:
         :return:
         """
-        if len(self.current_points) < 2:
+        if len(self.current_points) <= 2:
             self.current_points.append(point)
             return
         cross_point_dict = {}  # 记录线段与其他点的相交点，{0:P1,6:P2}
@@ -91,6 +88,8 @@ class SdPolygon(object):
             else:
                 points = self.current_points[cross_i + 1:]
                 points.append((cross_point.x, cross_point.y))
+                if len(points)<=2:
+                    continue
                 p = Polygon(points)
                 self.sd_polygons.append(p)  # 将生成的polygon保存
             flag_dict.update(index=cross_i, point=cross_point)
@@ -145,10 +144,10 @@ class SdPolygon(object):
             return False
 
         if self.is_in_segment(point, l1.p1, l1.p2) and self.is_in_segment(point, l2.p1, l2.p2):
-            if (is_same_point(point, l1.p1) or is_same_point(point, l1.p2)) and (
-                        is_same_point(point, l2.p1) or is_same_point(point, l2.p2)):
-                # 判断是否在两条线段的端点上
-                return False
+            # if (is_same_point(point, l1.p1) or is_same_point(point, l1.p2)) and (
+            #             is_same_point(point, l2.p1) or is_same_point(point, l2.p2)):
+            # 判断是否在两条线段的端点上
+            # return False
             return True
         return False
 
@@ -175,6 +174,69 @@ class SdPolygon(object):
         p = Point()
         if d == 0:
             return p
-        p.x = ((l1.b * l2.c - l2.b * l1.c) // d)
-        p.y = ((l1.c * l2.a - l2.c * l1.a) // d)
+        p.x = (l1.b * l2.c - l2.b * l1.c) / d
+        p.y = (l1.c * l2.a - l2.c * l1.a) / d
         return p
+
+
+# 测试方法，待完善后删除
+if __name__ == '__main__':
+    def test_cross():
+        p = SdPolygon().get_cross_point(Line(Point(1, 0), Point(0, 1)), Line(Point(1, 1), Point(1, 2)))
+        flag = SdPolygon().is_in_segment(p, Point(1, 0), Point(0, 1)) and SdPolygon.is_in_segment(p, Point(1, 1),
+                                                                                                  Point(1, 2))
+        print(flag)
+        print(p)
+
+
+    def test_pylogon():
+        task_info = '{"point": [{"value": "1", "color": "red", "points": [{"x": 1883.33, "y": 1139.58}, {"x": 1866.67, "y": 1210.42}, {"x": 1906.25, "y": 1212.5}, {"x": 1970.83, "y": 1218.75}, {"x": 2187.5, "y": 1222.92}, {"x": 2212.5, "y": 1231.25}, {"x": 2247.92, "y": 1231.25}, {"x": 2262.5, "y": 1204.17}, {"x": 2302.08, "y": 1195.83}, {"x": 2302.08, "y": 1143.75}, {"x": 2256.25, "y": 1118.75}, {"x": 2168.75, "y": 1093.75}, {"x": 2052.08, "y": 1097.92}, {"x": 1993.75, "y": 1122.92}]}, {"value": "1", "color": "red", "points": [{"x": 2360.89, "y": 1120.71}, {"x": 2377.96, "y": 1171.91}, {"x": 2440.53, "y": 1183.29}, {"x": 2514.49, "y": 1183.29}, {"x": 2560, "y": 1183.29}, {"x": 2582.76, "y": 1183.29}, {"x": 2605.51, "y": 1177.6}, {"x": 2622.58, "y": 1177.6}, {"x": 2639.64, "y": 1115.02}, {"x": 2594.13, "y": 1075.2}, {"x": 2497.42, "y": 1058.13}, {"x": 2400.71, "y": 1080.89}]}, {"value": "1", "color": "red", "points": [{"x": 1012.62, "y": 1046.76}, {"x": 1012.62, "y": 1154.84}, {"x": 1058.13, "y": 1194.67}, {"x": 1137.78, "y": 1194.67}, {"x": 1206.04, "y": 1194.67}, {"x": 1166.22, "y": 1029.69}, {"x": 1103.64, "y": 1029.69}, {"x": 1041.07, "y": 1029.69}, {"x": 1018.31, "y": 1029.69}]}]}'
+        task_info = '{"point": [{"value": "1", "color": "red", "points": [{"x": 1883.33, "y": 1139.58}, {"x": 1866.67, "y": 1210.42}, {"x": 1906.25, "y": 1212.5}, {"x": 1970.83, "y": 1218.75}, {"x": 2187.5, "y": 1222.92}, {"x": 2212.5, "y": 1231.25}, {"x": 2247.92, "y": 1231.25}, {"x": 2262.5, "y": 1204.17}, {"x": 2302.08, "y": 1195.83}, {"x": 2302.08, "y": 1143.75}, {"x": 2256.25, "y": 1118.75}, {"x": 2168.75, "y": 1093.75}, {"x": 2052.08, "y": 1097.92}, {"x": 1993.75, "y": 1122.92}]}, {"value": "1", "color": "red", "points": [{"x": 2360.89, "y": 1120.71}, {"x": 2377.96, "y": 1171.91}, {"x": 2440.53, "y": 1183.29}, {"x": 2514.49, "y": 1183.29}, {"x": 2560, "y": 1183.29}, {"x": 2582.76, "y": 1183.29}, {"x": 2605.51, "y": 1177.6}, {"x": 2622.58, "y": 1177.6}, {"x": 2639.64, "y": 1115.02}, {"x": 2594.13, "y": 1075.2}, {"x": 2497.42, "y": 1058.13}, {"x": 2400.71, "y": 1080.89}]}]}'
+        task_info = '[{"value": "red", "color": "red", "points": [{"x": 631.34, "y": 285.04}, {"x": 977.65, "y": 356.96}, {"x": 948.34, "y": 564.74}, {"x": 735.23, "y": 599.38}]},{"value": "red", "color": "red", "points": [{"x": 631.34, "y": 285.04}, {"x": 977.65, "y": 356.96}, {"x": 948.34, "y": 564.74}, {"x": 735.23, "y": 599.38}]}]'
+        import json
+        info = json.loads(task_info)
+        get_points_in_keypoints(info)
+        points = [(0, 0), (0, 1), (1, 0), (1, 1)]
+        pylogon = Polygon(points)
+        print(pylogon.area)
+
+
+    def test_lambda():
+        dicta = {1: 'asd', 5: 'ddd', 2: 'www', 0: 'pppp'}
+        cross_points_list = sorted(dicta.items(), key=lambda item: item[0])
+        print(cross_points_list)
+
+
+    def test_truple():
+        a = (2, 3)
+        print(a[0])
+
+
+    def test_dict():
+        i = 3
+        dicta = {}
+        p = Point(1, 2)
+        dicta.update({i: p})
+        i += 1
+        dicta.update({i: p})
+        print(dicta)
+
+
+    def test_sdpolygon():
+        points = [(1, 1), (1, 5), (4, 5), (4, 3)]  # 正常多边形测试
+        # points = [(1, 1), (1, 3), (5, 3), (5, 5), (3, 5), (3, 1)]  # 内交一个点 的多边形
+        # points = [(1, 1), (1, 3), (5, 3), (5, 5), (3, 5), (3, 3), (3, 1)]  # 内交一个点 的多边形 area =8
+        # points = [(1, 1), (1, 3), (5, 3), (5, 5), (1, 5), (1, 7), (3, 7), (3, 1)]  # 内交两个点的多边形
+        sdpolygon = SdPolygon(points).sd_polygon
+        print(sdpolygon.area)
+
+
+    def test_inter():
+        points = [(728.05, 428.57), (1287.57, 428.57), (1042.33, 835.71),
+                  (1072.33, 875.71), (1272.33, 1075.71)]
+        # points = [(0, 0), (1, 0), (1, 1), (2, 1)]
+        sd = SdPolygon(points).sd_polygon
+        print(sd.area)
+
+
+    test_inter()
